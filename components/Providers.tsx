@@ -6,7 +6,7 @@ import {
   createConfig,
   http,
 } from 'wagmi';
-import { RainbowKitProvider, getDefaultWallets } from '@rainbow-me/rainbowkit';
+import { RainbowKitProvider, connectorsForWallets, wallet } from '@rainbow-me/rainbowkit';
 import { defineChain } from 'viem';
 import {
   QueryClient,
@@ -28,11 +28,16 @@ const pharos = defineChain({
   },
 });
 
-const { connectors } = getDefaultWallets({
-  appName: 'Pharos Multisend',
-  projectId: 'pharos-multisend',
-  chains: [pharos],
-});
+const connectors = connectorsForWallets([
+  {
+    groupName: 'Recommended',
+    wallets: [
+      wallet.metaMask({ chains: [pharos] }),
+      wallet.okx({ chains: [pharos] }),
+      wallet.bitget({ chains: [pharos] }),
+    ],
+  },
+]);
 
 const config = createConfig({
   connectors,
