@@ -67,11 +67,11 @@ export default function Page() {
       try {
         const txHash = await walletClient.sendTransaction({
           account: address,
-          to,
+          to: to as `0x${string}`,
           value: parseEther(amount),
         });
 
-        println(`✅ ${to} | https://pharos-testnet.socialscan.io/tx/${txHash}`);
+        println(`✅Sending to: ${to} | TxHash: https://pharos-testnet.socialscan.io/tx/${txHash}`);
 
         await new Promise((r) => setTimeout(r, 10_000));
         await verifyTask(jwt, address, txHash, taskId);
