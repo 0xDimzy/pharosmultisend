@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  @apply bg-black text-white;
+}
+
+.rk-account-button__button {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.rk-account-button__content {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.rk-account-button__chevron {
+  margin-left: 0.25rem;
+}
+
+.rk-account-modal__menu-item {
+  @apply text-sm py-2;
+}
+#__nextjs-error-overlay {
+  display: none !important;
+}
