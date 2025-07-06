@@ -38,16 +38,22 @@ const pharos = defineChain({
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
 
-const connectors = connectorsForWallets([
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Recommended',
+      wallets: [
+        metaMaskWallet({ chains: [pharos] }),
+        okxWallet({ chains: [pharos] }),
+        bitgetWallet({ chains: [pharos] }),
+      ],
+    },
+  ],
   {
-    groupName: 'Recommended',
-    wallets: [
-      metaMaskWallet({ projectId: PROJECT_ID, chains: [pharos] }),
-      okxWallet({ projectId: PROJECT_ID, chains: [pharos] }),
-      bitgetWallet({ projectId: PROJECT_ID, chains: [pharos] }),
-    ],
-  },
-]);
+    appName: 'Pharos Multisend',
+    chains: [pharos],
+  }
+);
 
 const queryClient = new QueryClient();
 
