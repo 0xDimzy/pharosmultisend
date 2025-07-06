@@ -1,13 +1,16 @@
 'use client';
 
+import '@rainbow-me/rainbowkit/styles.css';
+import './globals.css';
 import { useAccount, useWalletClient } from 'wagmi';
 import { useState, useEffect } from 'react';
 import { parseEther } from 'viem';
 import { verifyTask } from '../lib/pharos';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
+
 export default function Page() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, connector } = useAccount();
   const { data: walletClient } = useWalletClient();
 
   const [jwt, setJwt] = useState('');
@@ -36,7 +39,7 @@ export default function Page() {
         message: 'pharos',
       });
 
-      const walletName = walletClient.connector?.name || 'Wallet';
+      const walletName = connector?.name || 'Wallet';
       const res = await fetch('/api/pharos-login', {
         method: 'POST',
         body: JSON.stringify({ address, signature, walletName }),
