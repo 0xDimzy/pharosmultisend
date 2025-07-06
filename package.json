@@ -1,0 +1,33 @@
+{
+  "name": "multisend-pharos",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.7.18",
+    "@rainbow-me/rainbowkit": "^2.2.8",
+    "@tanstack/react-query": "^5.81.5",
+    "@wagmi/connectors": "^5.8.5",
+    "axios": "^1.6.0",
+    "next": "^14.1.4",
+    "qr": "^0.5.0",
+    "react-blockies": "^1.4.1",
+    "tailwindcss": "^3.4.0",
+    "viem": "^2.31.7",
+    "wagmi": "^2.15.6"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.10",
+    "@types/react": "19.1.8",
+    "autoprefixer": "^10.4.17",
+    "madge": "^8.0.0",
+    "pino-pretty": "^13.0.0",
+    "postcss": "^8.4.31",
+    "typescript": "^5.3.3"
+  }
+}
