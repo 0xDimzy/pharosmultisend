@@ -6,8 +6,15 @@ import {
   createConfig,
   http,
 } from 'wagmi';
-import { RainbowKitProvider, connectorsForWallets } from '@rainbow-me/rainbowkit';
-import { metaMaskWallet, okxWallet, bitgetWallet } from '@rainbow-me/rainbowkit/wallets';
+import {
+  RainbowKitProvider,
+  connectorsForWallets,
+} from '@rainbow-me/rainbowkit';
+import {
+  metaMaskWallet,
+  okxWallet,
+  bitgetWallet,
+} from '@rainbow-me/rainbowkit/wallets';
 import { defineChain } from 'viem';
 import {
   QueryClient,
@@ -29,22 +36,19 @@ const pharos = defineChain({
   },
 });
 
+const PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
+
 const connectors = connectorsForWallets(
   [
     {
       groupName: 'Recommended',
       wallets: [
-        metaMaskWallet({ chains: [pharos] }),
-        okxWallet({ chains: [pharos] }),
-        bitgetWallet({ chains: [pharos] }),
+        metaMaskWallet({ projectId: PROJECT_ID, chains: [pharos] }),
+        okxWallet({ projectId: PROJECT_ID, chains: [pharos] }),
+        bitgetWallet({ projectId: PROJECT_ID, chains: [pharos] }),
       ],
     },
-  ],
-  {
-    appName: 'Pharos Multisend',
-    projectId: 'pharos-multisend',
-    chains: [pharos],
-  }
+  ]
 );
 
 const config = createConfig({
