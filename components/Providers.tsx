@@ -29,16 +29,23 @@ const pharos = defineChain({
   },
 });
 
-const connectors = connectorsForWallets([
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Recommended',
+      wallets: [
+        metaMaskWallet({ chains: [pharos] }),
+        okxWallet({ chains: [pharos] }),
+        bitgetWallet({ chains: [pharos] }),
+      ],
+    },
+  ],
   {
-    groupName: 'Recommended',
-    wallets: [
-      metaMaskWallet({ chains: [pharos] }),
-      okxWallet({ chains: [pharos] }),
-      bitgetWallet({ chains: [pharos] }),
-    ],
-  },
-]);
+    appName: 'Pharos Multisend',
+    projectId: 'pharos-multisend',
+    chains: [pharos],
+  }
+);
 
 const config = createConfig({
   connectors,
