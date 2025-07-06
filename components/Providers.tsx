@@ -6,7 +6,8 @@ import {
   createConfig,
   http,
 } from 'wagmi';
-import { RainbowKitProvider, connectorsForWallets, wallet } from '@rainbow-me/rainbowkit';
+import { RainbowKitProvider, connectorsForWallets } from '@rainbow-me/rainbowkit';
+import { metaMaskWallet, okxWallet, bitgetWallet } from '@rainbow-me/rainbowkit/wallets';
 import { defineChain } from 'viem';
 import {
   QueryClient,
@@ -32,9 +33,9 @@ const connectors = connectorsForWallets([
   {
     groupName: 'Recommended',
     wallets: [
-      wallet.metaMask({ chains: [pharos] }),
-      wallet.okx({ chains: [pharos] }),
-      wallet.bitget({ chains: [pharos] }),
+      metaMaskWallet({ chains: [pharos] }),
+      okxWallet({ chains: [pharos] }),
+      bitgetWallet({ chains: [pharos] }),
     ],
   },
 ]);
