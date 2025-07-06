@@ -2,7 +2,7 @@ import './globals.css';
 import { ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 
-const Providers = dynamic(() => import('../components/Providers.tsx'), { ssr: false });
+const Providers = dynamic(() => import('../components/Providers'), { ssr: false });
 
 export const metadata = {
   title: 'Pharos Multisend',
