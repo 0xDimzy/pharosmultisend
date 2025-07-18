@@ -1,9 +1,4 @@
-export async function verifyTask(
-  jwt: string,
-  address: string,
-  txHash: string,
-  taskId: string
-) {
+export async function verifyTask(jwt: string, address: string, txHash: string, taskId: string) {
   const res = await fetch('/api/verify-task', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
