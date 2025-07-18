@@ -32,27 +32,48 @@ export default function Page() {
   }, [addrRaw]);
 
   const doLogin = async () => {
-    if (!walletClient || !address) return;
+  if (!walletClient || !address) return;
+  try {
+    const signature = await walletClient.signMessage({
+      account: address,
+      message: 'pharos',
+    });
+    const res = await fetch('/api/pharos-login', {
+      method: 'POST',
+      body: JSON.stringify({ address, signature, walletName: 'WebApp' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    let data: any;
     try {
-      const signature = await walletClient.signMessage({
-        account: address,
-        message: 'pharos',
-      });
-
-      const res = await fetch('/api/pharos-login', {
-        method: 'POST',
-        body: JSON.stringify({ address, signature }),
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const data = await res.json();
-      if (!data?.data?.jwt) return alert('Login gagal: ' + data?.msg || 'Unknown');
-      setJwt(data.data.jwt);
-      println('✅ Login berhasil');
-    } catch (err: any) {
-      alert('Login error: ' + err.message);
+      data = await res.json(); 
+    } catch {
+      const txt = await res.text();
+      println(`❌ Login parse error: ${txt.slice(0, 200)}`);
+      alert('Login gagal (parse)');
+      return;
     }
-  };
+
+    if (!res.ok || data?.code !== 0) {
+      println(`❌ Login gagal: ${data?.msg || res.statusText}`);
+      alert(`Login gagal: ${data?.msg || `HTTP ${res.status}`}`);
+      return;
+    }
+
+    const token = data?.data?.jwt;
+    if (!token) {
+      println('❌ Login response tanpa JWT');
+      alert('Login gagal: JWT kosong');
+      return;
+    }
+
+    setJwt(token);
+    println('✅ Login berhasil');
+  } catch (err: any) {
+    println(`❌ Login error: ${err.message}`);
+    alert('Login error: ' + err.message);
+  }
+};
 
   const sendAll = async () => {
     if (!walletClient || !address || !jwt) return;
