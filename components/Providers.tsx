@@ -14,7 +14,6 @@ const PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_ID as string;
 const { connectors } = getDefaultWallets({
   appName: 'Pharos Multisend',
   projectId: PROJECT_ID,
-  chains: [pharos],
 });
 
 const config = createConfig({
@@ -31,7 +30,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider chains={[pharos]}>{children}</RainbowKitProvider>
+        <RainbowKitProvider>{children}</RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
