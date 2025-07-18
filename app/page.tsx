@@ -8,9 +8,8 @@ import { parseEther } from 'viem';
 import { verifyTask } from '../lib/pharos';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
-
 export default function Page() {
-  const { address, isConnected, connector } = useAccount();
+  const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
   const [jwt, setJwt] = useState('');
@@ -18,6 +17,7 @@ export default function Page() {
   const [addrList, setAddrList] = useState<string[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
   const [amount, setAmount] = useState('0.005');
   const taskId = '103';
 
@@ -31,6 +31,7 @@ export default function Page() {
     setAddrList(list);
   }, [addrRaw]);
 
+
   const doLogin = async () => {
     if (!walletClient || !address) return;
     try {
@@ -39,7 +40,7 @@ export default function Page() {
         message: 'pharos',
       });
 
-      const walletName = connector?.name || 'Wallet';
+      const walletName = walletClient.connector?.name || 'Wallet';
       const res = await fetch('/api/pharos-login', {
         method: 'POST',
         body: JSON.stringify({ address, signature, walletName }),
@@ -57,23 +58,34 @@ export default function Page() {
     }
   };
 
+  const cancelProcess = () => {
+    setIsCancelled(true);
+    setBusy(false);
+    println('⛔ Proses dibatalkan oleh user.');
+  };
+
   const sendAll = async () => {
     if (!walletClient || !address || !jwt) return;
     if (!addrList.length) return alert('Daftar address kosong');
 
     setBusy(true);
+    setIsCancelled(false);
 
     for (const to of addrList) {
+      if (isCancelled) break;
+
       try {
         const txHash = await walletClient.sendTransaction({
           account: address,
-          to: to as `0x${string}`,
+          to,
           value: parseEther(amount),
         });
 
-        println(`✅Sending to: ${to} | TxHash: https://pharos-testnet.socialscan.io/tx/${txHash}`);
+        println(`✅ Send to ${to} | Tx Hash : https://pharos-testnet.socialscan.io/tx/${txHash}`);
 
         await new Promise((r) => setTimeout(r, 10_000));
+        if (isCancelled) break; 
+
         await verifyTask(jwt, address, txHash, taskId);
         println('   ↳ ✅ Verified');
       } catch (e: any) {
@@ -85,7 +97,7 @@ export default function Page() {
     setBusy(false);
   };
 
-  return (
+return (
     <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
       <div className="w-full max-w-2xl bg-white/10 backdrop-blur rounded-2xl p-6 space-y-5">
         <h1 className="text-3xl font-bold text-indigo-300 text-center">Pharos Multisend</h1>
@@ -148,6 +160,15 @@ export default function Page() {
         >
           {busy ? '🚀 Sending…' : `📤 Send to ${addrList.length} address`}
         </button>
+
+        {busy && (
+          <button
+            onClick={cancelProcess}
+            className="w-full bg-red-600 hover:bg-red-700 rounded-lg py-2 font-semibold mt-2"
+          >
+            ❌ Cancel
+          </button>
+        )}
 
         <pre className="bg-black text-green-400 rounded p-3 max-h-60 overflow-y-auto text-xs whitespace-pre-wrap">
           {logs.join('\n')}
