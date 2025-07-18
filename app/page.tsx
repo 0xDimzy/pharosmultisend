@@ -14,12 +14,12 @@ export default function Page() {
 
   const [jwt, setJwt] = useState('');
   const [addrRaw, setAddrRaw] = useState('');
-  const [addrList, setAddrList] = useState<`0x${string}`[]>([]);
+  const [addrList, setAddrList] = useState<string[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [amount, setAmount] = useState('0.005');
-  const taskId = '103';
   const cancelRef = useRef(false);
+  const taskId = '103';
 
   const println = (msg: string) => setLogs((l) => [...l, msg]);
 
@@ -27,7 +27,7 @@ export default function Page() {
     const list = addrRaw
       .split(/[\n,\s]+/)
       .map((a) => a.trim())
-      .filter((a) => /^0x[a-fA-F0-9]{40}$/.test(a)) as `0x${string}`[];
+      .filter((a) => a.startsWith('0x') && a.length === 42);
     setAddrList(list);
   }, [addrRaw]);
 
@@ -42,13 +42,11 @@ export default function Page() {
       const res = await fetch('/api/pharos-login', {
         method: 'POST',
         body: JSON.stringify({ address, signature }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
       const data = await res.json();
-      if (!data?.data?.jwt) return alert('Login gagal: ' + (data?.msg || 'Unknown'));
+      if (!data?.data?.jwt) return alert('Login gagal: ' + data?.msg || 'Unknown');
       setJwt(data.data.jwt);
       println('✅ Login berhasil');
     } catch (err: any) {
@@ -65,7 +63,7 @@ export default function Page() {
 
     for (const to of addrList) {
       if (cancelRef.current) {
-        println('⛔ Pengiriman dibatalkan.');
+        println('⛔ Dibatalkan oleh user');
         break;
       }
       try {
@@ -75,7 +73,7 @@ export default function Page() {
           value: parseEther(amount),
         });
 
-        println(`✅ Send to ${to} | Tx : https://pharos-testnet.socialscan.io/tx/${txHash}`);
+        println(`✅ Send to ${to} | Tx: https://pharos-testnet.socialscan.io/tx/${txHash}`);
 
         await new Promise((r) => setTimeout(r, 10_000));
         await verifyTask(jwt, address, txHash, taskId);
@@ -89,22 +87,13 @@ export default function Page() {
     setBusy(false);
   };
 
-  const cancelSend = () => {
-    cancelRef.current = true;
-    setBusy(false);
-  };
-
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
       <div className="w-full max-w-2xl bg-white/10 backdrop-blur rounded-2xl p-6 space-y-5">
         <h1 className="text-3xl font-bold text-indigo-300 text-center">Pharos Multisend</h1>
 
-        <div className="flex justify-center items-center">
-          <ConnectButton
-            showBalance={false}
-            chainStatus="icon"
-            accountStatus={{ smallScreen: 'avatar', largeScreen: 'full' }}
-          />
+        <div className="flex justify-center">
+          <ConnectButton showBalance={false} chainStatus="icon" accountStatus="full" />
         </div>
 
         {isConnected && !jwt && (
@@ -115,12 +104,6 @@ export default function Page() {
             🔐 Login to Pharos
           </button>
         )}
-
-        <div className="text-sm text-red-300 text-center">
-          {!isConnected && '🔌 Wallet belum terkoneksi'}<br />
-          {isConnected && !jwt && '🔐 Belum login Pharos'}<br />
-          {busy && '⏳ Sedang mengirim...'}
-        </div>
 
         <textarea
           className="w-full p-3 rounded text-black"
@@ -156,17 +139,18 @@ export default function Page() {
             onClick={sendAll}
             className="flex-1 bg-indigo-600 hover:bg-indigo-700 rounded-lg py-2 font-semibold disabled:bg-gray-500"
           >
-            {busy ? '🚀 Sending…' : `📤 Send (${addrList.length})`}
+            {busy ? '🚀 Sending…' : `📤 Send ${addrList.length}`}
           </button>
-
-          {busy && (
-            <button
-              onClick={cancelSend}
-              className="flex-1 bg-red-600 hover:bg-red-700 rounded-lg py-2 font-semibold"
-            >
-              ❌ Cancel
-            </button>
-          )}
+          <button
+            onClick={() => {
+              cancelRef.current = true;
+              setBusy(false);
+            }}
+            disabled={!busy}
+            className="flex-1 bg-red-600 hover:bg-red-700 rounded-lg py-2 font-semibold disabled:bg-gray-500"
+          >
+            ⛔ Cancel
+          </button>
         </div>
 
         <pre className="bg-black text-green-400 rounded p-3 max-h-60 overflow-y-auto text-xs whitespace-pre-wrap">
