@@ -6,14 +6,20 @@ import axios from 'axios';
 export async function POST(req: NextRequest) {
   try {
     const { jwt, address, txHash, taskId } = await req.json();
-    const url = `https://api.pharosnetwork.xyz/task/verify?address=${address}&task_id=${taskId}&tx_hash=${txHash}`;
+    const url = `https://api.pharosnetwork.xyz/task/verify`;
 
-    const res = await axios.post(url, null, {
+    const payload = {
+      address,
+      task_id: Number(taskId),
+      tx_hash: txHash,
+    };
+
+    const res = await axios.post(url, payload, {
       headers: {
         Authorization: `Bearer ${jwt}`,
         Referer: 'https://testnet.pharosnetwork.xyz',
         Origin: 'https://testnet.pharosnetwork.xyz',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Content-Type': 'application/json',
       },
     });
 
