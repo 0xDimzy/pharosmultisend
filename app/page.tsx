@@ -2,8 +2,8 @@
 
 import '@rainbow-me/rainbowkit/styles.css';
 import './globals.css';
-import { useAccount, useWalletClient } from 'wagmi';
-import { useState, useEffect } from 'react';
+import { useAccount, useWalletClient, useConnect } from 'wagmi';
+import { useState, useEffect, useRef } from 'react';
 import { parseEther } from 'viem';
 import { verifyTask } from '../lib/pharos';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -11,14 +11,15 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 export default function Page() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
+  const { connectors } = useConnect();
 
   const [jwt, setJwt] = useState('');
   const [addrRaw, setAddrRaw] = useState('');
   const [addrList, setAddrList] = useState<string[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  const [isCancelled, setIsCancelled] = useState(false);
   const [amount, setAmount] = useState('0.005');
+  const cancelRef = useRef(false);
   const taskId = '103';
 
   const println = (msg: string) => setLogs((l) => [...l, msg]);
@@ -31,7 +32,6 @@ export default function Page() {
     setAddrList(list);
   }, [addrRaw]);
 
-
   const doLogin = async () => {
     if (!walletClient || !address) return;
     try {
@@ -40,7 +40,7 @@ export default function Page() {
         message: 'pharos',
       });
 
-      const walletName = walletClient.connector?.name || 'Wallet';
+      const walletName = 'Wallet';
       const res = await fetch('/api/pharos-login', {
         method: 'POST',
         body: JSON.stringify({ address, signature, walletName }),
@@ -58,10 +58,9 @@ export default function Page() {
     }
   };
 
-  const cancelProcess = () => {
-    setIsCancelled(true);
-    setBusy(false);
-    println('⛔ Proses dibatalkan oleh user.');
+  const cancelSending = () => {
+    cancelRef.current = true;
+    println('⛔ Pengiriman dibatalkan oleh user');
   };
 
   const sendAll = async () => {
@@ -69,11 +68,10 @@ export default function Page() {
     if (!addrList.length) return alert('Daftar address kosong');
 
     setBusy(true);
-    setIsCancelled(false);
+    cancelRef.current = false;
 
     for (const to of addrList) {
-      if (isCancelled) break;
-
+      if (cancelRef.current) break;
       try {
         const txHash = await walletClient.sendTransaction({
           account: address,
@@ -81,11 +79,9 @@ export default function Page() {
           value: parseEther(amount),
         });
 
-        println(`✅ Send to ${to} | Tx Hash : https://pharos-testnet.socialscan.io/tx/${txHash}`);
+        println(`✅ Send to ${to} | Tx : https://pharos-testnet.socialscan.io/tx/${txHash}`);
 
         await new Promise((r) => setTimeout(r, 10_000));
-        if (isCancelled) break; 
-
         await verifyTask(jwt, address, txHash, taskId);
         println('   ↳ ✅ Verified');
       } catch (e: any) {
@@ -97,11 +93,12 @@ export default function Page() {
     setBusy(false);
   };
 
-return (
+  return (
     <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
       <div className="w-full max-w-2xl bg-white/10 backdrop-blur rounded-2xl p-6 space-y-5">
         <h1 className="text-3xl font-bold text-indigo-300 text-center">Pharos Multisend</h1>
 
+        {/* Wallet Connect */}
         <div className="flex justify-center items-center">
           <ConnectButton
             showBalance={false}
@@ -110,6 +107,7 @@ return (
           />
         </div>
 
+        {/* Login Button */}
         {isConnected && !jwt && (
           <button
             onClick={doLogin}
@@ -119,12 +117,14 @@ return (
           </button>
         )}
 
+        {/* Status Info */}
         <div className="text-sm text-red-300 text-center">
           {!isConnected && '🔌 Wallet belum terkoneksi'}<br />
           {isConnected && !jwt && '🔐 Belum login Pharos'}<br />
           {busy && '⏳ Sedang mengirim...'}
         </div>
 
+        {/* Address List */}
         <textarea
           className="w-full p-3 rounded text-black"
           rows={5}
@@ -134,6 +134,7 @@ return (
         />
         <p className="text-xs text-gray-300">{addrList.length} address valid</p>
 
+        {/* Pilih Amount */}
         <div className="flex gap-4">
           <button
             onClick={() => setAmount('0.001')}
@@ -153,23 +154,26 @@ return (
           </button>
         </div>
 
-        <button
-          disabled={busy || !jwt || !isConnected || addrList.length === 0}
-          onClick={sendAll}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-lg py-2 font-semibold disabled:bg-gray-500"
-        >
-          {busy ? '🚀 Sending…' : `📤 Send to ${addrList.length} address`}
-        </button>
-
-        {busy && (
+        {/* Tombol Send & Cancel */}
+        <div className="flex gap-4">
           <button
-            onClick={cancelProcess}
-            className="w-full bg-red-600 hover:bg-red-700 rounded-lg py-2 font-semibold mt-2"
+            disabled={busy || !jwt || !isConnected || addrList.length === 0}
+            onClick={sendAll}
+            className="flex-1 bg-indigo-600 hover:bg-indigo-700 rounded-lg py-2 font-semibold disabled:bg-gray-500"
           >
-            ❌ Cancel
+            {busy ? '🚀 Sending…' : `📤 Send ${addrList.length} address`}
           </button>
-        )}
+          {busy && (
+            <button
+              onClick={cancelSending}
+              className="flex-1 bg-red-600 hover:bg-red-700 rounded-lg py-2 font-semibold"
+            >
+              ⛔ Cancel
+            </button>
+          )}
+        </div>
 
+        {/* Logs */}
         <pre className="bg-black text-green-400 rounded p-3 max-h-60 overflow-y-auto text-xs whitespace-pre-wrap">
           {logs.join('\n')}
         </pre>
