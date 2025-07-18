@@ -1,36 +1,44 @@
 'use client';
 
-import '@rainbow-me/rainbowkit/styles.css';
+import { ReactNode } from 'react';
+import { WagmiProvider, createConfig, http } from 'wagmi';
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import {
-  RainbowKitProvider,
   getDefaultWallets,
 } from '@rainbow-me/rainbowkit';
-import { WagmiProvider, createConfig, http } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { pharos } from '../lib/pharosChain';
+import { defineChain } from 'viem';
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_ID as string;
+const pharos = defineChain({
+  id: 688688,
+  name: 'Pharos Testnet',
+  nativeCurrency: { name: 'PHRS', symbol: 'PHRS', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://testnet.dplabs-internal.com/'] },
+  },
+});
 
-const { connectors } = getDefaultWallets({
+const { wallets } = getDefaultWallets({
   appName: 'Pharos Multisend',
-  projectId: PROJECT_ID,
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_ID || '',
 });
 
 const config = createConfig({
   chains: [pharos],
-  connectors,
+  connectors: wallets,
   transports: {
-    [pharos.id]: http(pharos.rpcUrls.default.http[0]),
+    [pharos.id]: http('https://testnet.dplabs-internal.com/'),
   },
 });
 
 const queryClient = new QueryClient();
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider chains={[pharos]}>
+        {/* ✅ Tidak perlu chains di sini */}
+        <RainbowKitProvider>
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>
