@@ -1,40 +1,49 @@
-// app/api/pharos-login/route.ts
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
+
+const BASE_API  = process.env.NEXT_PUBLIC_BASE_API || 'https://api.pharosnetwork.xyz';
+const INVITE    = process.env.INVITE_CODE;
+const REFERER   = 'https://testnet.pharosnetwork.xyz';
+const ORIGIN    = 'https://testnet.pharosnetwork.xyz';
 
 export async function POST(req: NextRequest) {
-  console.log('🛬  /api/pharos-login hit');
-
   try {
     const { address, signature, walletName } = await req.json();
 
-    const url =
-      `https://api.pharosnetwork.xyz/user/login` +
-      `?address=${address}` +
-      `&signature=${encodeURIComponent(signature)}` +
-      `&wallet=${encodeURIComponent(walletName)}` +
-      `&invite_code=${process.env.INVITE_CODE || ''}`;
-
-    console.log('[login] url:', url);
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Referer: 'https://testnet.pharosnetwork.xyz',
-        Origin:  'https://testnet.pharosnetwork.xyz',
-      },
+    if (!address || !signature) {
+      return NextResponse.json(
+        { code: -1, msg: 'Missing address/signature' },
+        { status: 400 },
+      );
+    }
+    const params = new URLSearchParams({
+      address,
+      signature,
     });
+    if (INVITE) params.set('invite_code', INVITE);
+    if (walletName) params.set('wallet', walletName);
 
-    const data = await res.json();
-    console.log('[login] data:', data);
-    return NextResponse.json(data);
-  } catch (err: any) {
-    console.error('[Login Error]', err);
+    const url = `${BASE_API}/user/login?${params.toString()}`;
+
+    const res = await axios.post(url, null, {
+      headers: {
+        Referer: REFERER,
+        Origin: ORIGIN,
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/plain, */*',
+      },
+      timeout: 20_000,
+      validateStatus: () => true,
+    });
     return NextResponse.json(
-      { code: 1, msg: err?.message ?? 'unknown' },
-      { status: 200 },       
+      res.data ?? { code: -1, msg: 'Empty response from Pharos' },
+      { status: res.status || 200 },
     );
+  } catch (err: any) {
+    const msg = err?.message || 'Unknown error';
+    console.error('[pharos-login] error:', err);
+    return NextResponse.json({ code: -1, msg }, { status: 500 });
   }
 }
